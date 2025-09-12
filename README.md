@@ -1,16 +1,22 @@
-# radiosangam_flutter
+# Radio Sangam (Flutter)
 
-A new Flutter project.
+A minimal Flutter app for streaming audio with `just_audio`.  
+This README documents the **single fix** that made playback work.
 
-## Getting Started
+## The Problem
 
-This project is a starting point for a Flutter application.
+We were seeing a mix of issues:
 
-A few resources to get you started if this is your first Flutter project:
+- Compilation errors like:
+  - `Error: The method 'playEpisode' isn't defined for the type 'RadioService'.`
+- At runtime, audio was flaky / not playing.
+- Analyzer warnings weren’t the root cause.
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+## Root Cause
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+**The same library was imported via two different URIs**, creating two distinct types in Dart:
+
+```dart
+// ❌ Problem: two imports of the same file
+import '../services/radio_service.dart'; // relative
+import 'package:radiosangam_flutter/src/services/radio_service.dart'; // package
