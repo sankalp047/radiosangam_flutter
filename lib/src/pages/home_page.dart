@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:just_audio/just_audio.dart';
 import 'podcasts_page.dart';
 import 'package:radiosangam_flutter/src/services/radio_service.dart';
+import 'rj_pages.dart';
+import 'live_this_week_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -46,38 +48,46 @@ class _HomePageState extends State<HomePage> {
           ListView(
             padding: EdgeInsets.fromLTRB(16, 8, 16, 120 + inset.bottom),
             children: [
-              const _AnnouncementBox(
+              // Tap -> open schedule page
+              _AnnouncementBox(
                 message: 'New shows live this week! Tap to view schedule.',
-                urlHint: 'https://radiosangam.example/schedule',
+                onTap: () => Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const LiveThisWeekPage()),
+                ),
               ),
               const SizedBox(height: 16),
+
+              // Weekday shows
               _SectionHeader(
-                title: 'Suggested Playlists',
-                onAction: () {}, // hook later if needed
+                title: 'Weekday Shows',
+                onAction: () {}, // (keep as a no-op)
               ),
               const SizedBox(height: 8),
               SizedBox(
                 height: 170,
                 child: _PlaylistRow(
-                  items: _demoPlaylists,
-                  onTap: (p) {
-                    // navigate to a playlist screen later
-                  },
+                  items: _weekdayShows,
+                  onTap: (p) => _openWeekdayRj(p.title),
                 ),
               ),
+
               const SizedBox(height: 20),
+
+              // Weekend shows
               _SectionHeader(
-                title: 'Back to Favorites',
+                title: 'Weekend Shows',
                 onAction: () {},
               ),
               const SizedBox(height: 8),
               SizedBox(
                 height: 170,
                 child: _PlaylistRow(
-                  items: _demoPlaylistsFavs,
-                  onTap: (p) {},
+                  items: _weekendShows,
+                  onTap: (p) => _openWeekendRj(p.title),
                 ),
               ),
+
+              // Recommended section left intact
               const SizedBox(height: 24),
               _SectionHeader(
                 title: 'Recommended For You',
@@ -125,7 +135,8 @@ class _HomePageState extends State<HomePage> {
               )),
             ],
           ),
-          // Mini player stuck to bottom — tap or swipe up arrow to expand
+
+          // Mini player
           Align(
             alignment: Alignment.bottomCenter,
             child: _MiniPlayer(onExpand: _openFullPlayer),
@@ -134,14 +145,64 @@ class _HomePageState extends State<HomePage> {
       ),
     );
   }
+
+  // -------- navigation helpers (weekday / weekend) --------
+
+  void _openWeekdayRj(String title) {
+    final Widget page;
+    switch (title) {
+      case 'Madhurima (7–11am)':
+        page = const MadhurimaPage();
+        break;
+      case 'Hyma (11am–2pm)':
+        page = const HymaPage();
+        break;
+      case 'Yashini (2–5pm)':
+        page = const YashiniPage();
+        break;
+      case 'Shravanthi (5–8pm)':
+        page = const ShravanthiPage();
+        break;
+      default:
+        page = const MadhurimaPage();
+    }
+    Navigator.of(context).push(MaterialPageRoute(builder: (_) => page));
+  }
+
+  void _openWeekendRj(String title) {
+    final Widget page;
+    switch (title) {
+      case 'Mythri':
+        page = const MythriPage();
+        break;
+      case 'Madhurya':
+        page = const MadhuryaPage();
+        break;
+      case 'DNR':
+        page = const DnrPage();
+        break;
+      case 'Naveen':
+        page = const NaveenPage();
+        break;
+      case 'Akarsh':
+        page = const AkarshPage();
+        break;
+      case 'Shailaja':
+        page = const ShailajaPage();
+        break;
+      default:
+        page = const MythriPage();
+    }
+    Navigator.of(context).push(MaterialPageRoute(builder: (_) => page));
+  }
 }
 
 /* ---------- Widgets (clean-room, no GPL code) ---------- */
 
 class _AnnouncementBox extends StatelessWidget {
   final String message;
-  final String? urlHint;
-  const _AnnouncementBox({required this.message, this.urlHint});
+  final VoidCallback? onTap;
+  const _AnnouncementBox({required this.message, this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -150,7 +211,7 @@ class _AnnouncementBox extends StatelessWidget {
       borderRadius: BorderRadius.circular(14),
       child: InkWell(
         borderRadius: BorderRadius.circular(14),
-        onTap: urlHint == null ? null : () {/* open url later */},
+        onTap: onTap,
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
           child: Row(
@@ -166,7 +227,7 @@ class _AnnouncementBox extends StatelessWidget {
                   ),
                 ),
               ),
-              if (urlHint != null) const Icon(Icons.chevron_right_rounded),
+              if (onTap != null) const Icon(Icons.chevron_right_rounded),
             ],
           ),
         ),
@@ -397,7 +458,7 @@ class _FullPlayerSheet extends StatelessWidget {
             Center(
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(20),
-                child: Image.asset('assets/images/logo.png', width: 280, height: 280, fit: BoxFit.cover),
+                child: Image.asset('assets/images/logoPowerAll.png', width: 280, height: 280, fit: BoxFit.cover),
               ),
             ),
             const SizedBox(height: 20),
@@ -458,7 +519,7 @@ class _FullPlayerSheet extends StatelessWidget {
   }
 }
 
-/* ---------- demo data (replace with real API later) ---------- */
+/* ---------- data ---------- */
 
 class _Playlist {
   final String title;
@@ -474,18 +535,22 @@ class _Track {
   const _Track(this.title, this.artist, this.artAsset, this.demoUrl);
 }
 
-// Put matching images under assets/images/ and register in pubspec.yaml
-const _demoPlaylists = <_Playlist>[
-  _Playlist('Morning Drive', 'assets/images/logo.png'),
-  _Playlist('Retro Rewind', 'assets/images/logo.png'),
-  _Playlist('Punjabi Party', 'assets/images/logo.png'),
-  _Playlist('Indie Hour', 'assets/images/logo.png'),
+// WEEKDAY shows (titles include their time ranges)
+const _weekdayShows = <_Playlist>[
+  _Playlist('Madhurima (7–11am)', 'assets/images/MadhuCover.png'),
+  _Playlist('Hyma (11am–2pm)', 'assets/images/hymaCover.png'),
+  _Playlist('Yashini (2–5pm)', 'assets/images/yashiniCover.png'),
+  _Playlist('Shravanthi (5–8pm)', 'assets/images/shravCover.png'),
 ];
 
-const _demoPlaylistsFavs = <_Playlist>[
-  _Playlist('Your Likes', 'assets/images/logo.png'),
-  _Playlist('Chillout', 'assets/images/logo.png'),
-  _Playlist('Top Bollywood', 'assets/images/logo.png'),
+// WEEKEND shows (names only)
+const _weekendShows = <_Playlist>[
+  _Playlist('Mythri', 'assets/images/Mythri_Cover.png'),
+  _Playlist('Madhurya', 'assets/images/Madhu_T_Cover.png'),
+  _Playlist('DNR', 'assets/images/DNR.png'),
+  _Playlist('Naveen', 'assets/images/naveenCover.png'),
+  _Playlist('Akarsh', 'assets/images/akarsh_Cover.png'),
+  _Playlist('Shailaja', 'assets/images/shailaja_Cover.png'),
 ];
 
 extension _MapIndexed<E> on Iterable<E> {
@@ -495,10 +560,10 @@ extension _MapIndexed<E> on Iterable<E> {
 }
 
 const _demoTracks = <_Track>[
-  _Track('Top Bollywood Hits – Sep 1', 'RJ Anuj', 'assets/images/logo.png',
+  _Track('Top Bollywood Hits – Sep 1', 'RJ Anuj', 'assets/images/logoPowerAll.png',
       'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3'),
-  _Track('Retro Rewind – Sep 3', 'RJ Neha', 'assets/images/logo.png',
+  _Track('Retro Rewind – Sep 3', 'RJ Neha', 'assets/images/logoPowerAll.png',
       'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3'),
-  _Track('Weekend Chill – Aug 26', 'RJ Neha', 'assets/images/logo.png',
+  _Track('Weekend Chill – Aug 26', 'RJ Neha', 'assets/images/logoPowerAll.png',
       'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3'),
 ];
